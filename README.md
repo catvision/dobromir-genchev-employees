@@ -18,7 +18,6 @@ Make sure you have **Node.js** and **npm** installed.
 
 ```bash
 git clone https://github.com/catvision/dobromir-genchev-employees.git
-cd react-csv-uploader
 ```
 
 ### 2. Install dependencies
