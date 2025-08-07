@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
+import styles from './ProjectDiagram.module.css';
 
 const ProjectDiagram = ({ ds, showProjectId }) => {
     const canvasRef = useRef(null);
+    const [activeKey, setActiveKey] = useState(showProjectId);
 
     // Get screen width and height
     const scrWidth = typeof window !== 'undefined' ? document.body.getBoundingClientRect().width : 800;
@@ -18,7 +20,7 @@ const ProjectDiagram = ({ ds, showProjectId }) => {
     //unique color per empl
     let emplColors = {};
 
-   
+
 
     const getColor = (index) => {
         const hue = (index * 137.508) % 360;
@@ -104,7 +106,7 @@ const ProjectDiagram = ({ ds, showProjectId }) => {
     const drawOverlaps = (ds) => {
 
         const empIds = Object.keys(ds);
-         let overlapsMap = {};
+        let overlapsMap = {};
         //Prepare map of overlaps
         for (let i = 0; i < empIds.length; i++) {
             for (let j = i + 1; j < empIds.length; j++) {
@@ -156,13 +158,13 @@ const ProjectDiagram = ({ ds, showProjectId }) => {
 
             if (!overlaps || overlaps.length === 0) continue;
 
-            const ovrH =Math.min(6, Math.ceil((rowPerPixel / 2) / overlaps.length));
-            ctx.lineWidth = 1;  
+            const ovrH = Math.min(6, Math.ceil((rowPerPixel / 2) / overlaps.length));
+            ctx.lineWidth = 1;
             for (let i = 0; i < overlaps.length; i++) {
                 const overlap = overlaps[i];
                 const x = ctxLeftMargin + Math.ceil((overlap.start - firstDayDt) / (24 * 60 * 60)) * dayPerPixel;
                 const width = Math.ceil((overlap.end - overlap.start) / (24 * 60 * 60)) * dayPerPixel;
-                const y = emplCoordinateY[empId] + (rowPerPixel / 2) + (ovrH * i)-5; //offset down
+                const y = emplCoordinateY[empId] + (rowPerPixel / 2) + (ovrH * i) - 5; //offset down
                 ctx.fillStyle = "#222222ff";
                 ctx.fillRect(x, y, width, ovrH);
                 ctx.strokeStyle = overlap.color;
@@ -174,6 +176,7 @@ const ProjectDiagram = ({ ds, showProjectId }) => {
     }
 
     const showDiagram = (prjKey) => {
+        setActiveKey(prjKey);
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
@@ -203,30 +206,29 @@ const ProjectDiagram = ({ ds, showProjectId }) => {
     const keys = Object.keys(ds);
 
     useEffect(() => {
+        setActiveKey(showProjectId);
         showDiagram(showProjectId);
         // eslint-disable-next-line
     }, [showProjectId, ds]);
 
     return (
-        <div>
-            <h2>Project Diagram</h2>
+        <div className={styles.container}>
+            <h2 className={styles.heading}>Project Diagram</h2>
 
-            <div>
+            <div className={styles.buttonGroup}>
                 {keys.map((key) => (
                     <button
                         key={key}
                         onClick={() => showDiagram(key)}
-                        style={{ margin: '5px' }}
+                        className={`${styles.projectButton} ${activeKey === key ? styles.active : ''}`}
                     >
                         {key}
                     </button>
                 ))}
             </div>
 
-            <canvas ref={canvasRef} width={scrWidth} height={600} />
-
+            <canvas ref={canvasRef} width={scrWidth} height={600} className={styles.canvas} />
         </div>
-
     );
 };
 

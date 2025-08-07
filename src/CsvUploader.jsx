@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import ErrorLogCSV from './ErrorLogCSV';
 import BestPairGrid from './BestPairGrid';
 import ProjectDiagram from './ProjectDiagram';
+import styles from './CsvUploader.module.css'; 
 
 const CsvUploader = () => {
 
@@ -31,9 +32,9 @@ const CsvUploader = () => {
             return null;
         }
 
-        if(dateTo < dateFrom) {
+        if (dateTo < dateFrom) {
             setParseErrors(prev => [...prev, { rowIndex, reason: 'dateTo is before dateFrom', rowText }]);
-            return null;    
+            return null;
         }
 
         // Store in dsProjects
@@ -90,7 +91,7 @@ const CsvUploader = () => {
         for (const projectId in dsProjects) {
             const employees = dsProjects[projectId];
             const empIds = Object.keys(employees);
-            let curProjectOvelaps = [];
+            let curProjectOverlaps = [];
 
             for (let i = 0; i < empIds.length; i++) {
                 for (let j = i + 1; j < empIds.length; j++) {
@@ -115,10 +116,10 @@ const CsvUploader = () => {
                             //add a pair or increment existing paircur
                             if (daysOverlap > 0) {
 
-                                curProjectOvelaps[empIdOne + "_" + empIdTwo] =
-                                    (curProjectOvelaps[empIdOne + "_" + empIdTwo] || 0) + Math.ceil(daysOverlap / (24 * 60 * 60)); // convert seconds to days
+                                curProjectOverlaps[empIdOne + "_" + empIdTwo] =
+                                    (curProjectOverlaps[empIdOne + "_" + empIdTwo] || 0) + Math.ceil(daysOverlap / (24 * 60 * 60)); // convert seconds to days
 
-                                const totalOverlap = curProjectOvelaps[empIdOne + "_" + empIdTwo];
+                                const totalOverlap = curProjectOverlaps[empIdOne + "_" + empIdTwo];
                                 if (totalOverlap > maxDays) {
                                     maxDays = totalOverlap;
                                     curBestPair = { empIdOne, empIdTwo, projectId, days: totalOverlap };
@@ -129,7 +130,7 @@ const CsvUploader = () => {
                     }
                 }
             }
-            console.log(projectId, '=>', curProjectOvelaps);
+            console.log(projectId, '=>', curProjectOverlaps);
         }
 
         setBestPair(curBestPair);
@@ -145,7 +146,7 @@ const CsvUploader = () => {
         reader.onload = (e) => {
             const text = e.target.result;
             const lines = text.trim().split('\n');
-            
+
             setParseErrors([]); // Reset errors
             lines
                 .map((row, index) => parseCsvRow(row, index))
@@ -161,21 +162,44 @@ const CsvUploader = () => {
     };
 
     return (
-        <div>
-            <h2>Upload CSV</h2>
-            <input type="file" accept=".csv" onChange={handleFileChange} />
-            {parseErrors.length > 0 && <ErrorLogCSV errors={parseErrors} />}
-            {bestPair.empIdOne && <BestPairGrid bestPair={bestPair} />}
+        <div className={styles.container}>
+            <h2 className={styles.heading}>Upload CSV</h2>
+
+            <div className={styles.fileInputWrapper}>
+                <input
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileChange}
+                    className={styles.fileInput}
+                />
+            </div>
+
+            {parseErrors.length > 0 && (
+                <div className={styles.section}>
+                    <ErrorLogCSV errors={parseErrors} />
+                </div>
+            )}
+
             {bestPair.empIdOne && (
-                <button onClick={() => setShowDiagram(true)}>
+                <div className={styles.section}>
+                    <BestPairGrid bestPair={bestPair} />
+                </div>
+            )}
+
+            {bestPair.empIdOne && (
+                <button className={styles.button} onClick={() => setShowDiagram(true)}>
                     Show Projects Diagram
                 </button>
             )}
+
             {showDiagram && (
-                <ProjectDiagram ds={dsDiagram.current} showProjectId={bestPair.projectId}/>
+                <div className={styles.diagramWrapper}>
+                    <ProjectDiagram ds={dsDiagram.current} showProjectId={bestPair.projectId} />
+                </div>
             )}
         </div>
     );
+
 };
 
 export default CsvUploader;
