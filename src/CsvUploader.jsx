@@ -1,12 +1,15 @@
 import React, { useState, useRef } from 'react';
 import ErrorLogCSV from './ErrorLogCSV';
 import BestPairGrid from './BestPairGrid';
+import ProjectDiagram from './ProjectDiagram';
 
 const CsvUploader = () => {
 
     const dsProjects = {};
     const [bestPair, setBestPair] = useState({ empIdOne: null, empIdTwo: null, projectId: null, days: 0 });
     const [parseErrors, setParseErrors] = useState([]);
+    const [showDiagram, setShowDiagram] = useState(false);
+    const dsDiagram = useRef({})
 
     const parseCsvRow = (rowText, rowIndex) => {
         const parts = rowText.split(',');
@@ -26,6 +29,11 @@ const CsvUploader = () => {
             if (rowIndex > 0) // Skip header row
                 setParseErrors(prev => [...prev, { rowIndex, reason: 'Invalid data types', rowText }]);
             return null;
+        }
+
+        if(dateTo < dateFrom) {
+            setParseErrors(prev => [...prev, { rowIndex, reason: 'dateTo is before dateFrom', rowText }]);
+            return null;    
         }
 
         // Store in dsProjects
@@ -125,6 +133,7 @@ const CsvUploader = () => {
         }
 
         setBestPair(curBestPair);
+        dsDiagram.current = dsProjects; // Store the projects data for diagram
     }
 
     const handleFileChange = (event) => {
@@ -136,7 +145,8 @@ const CsvUploader = () => {
         reader.onload = (e) => {
             const text = e.target.result;
             const lines = text.trim().split('\n');
-
+            
+            setParseErrors([]); // Reset errors
             lines
                 .map((row, index) => parseCsvRow(row, index))
                 .filter(row => row !== null);
@@ -156,6 +166,14 @@ const CsvUploader = () => {
             <input type="file" accept=".csv" onChange={handleFileChange} />
             {parseErrors.length > 0 && <ErrorLogCSV errors={parseErrors} />}
             {bestPair.empIdOne && <BestPairGrid bestPair={bestPair} />}
+            {bestPair.empIdOne && (
+                <button onClick={() => setShowDiagram(true)}>
+                    Show Projects Diagram
+                </button>
+            )}
+            {showDiagram && (
+                <ProjectDiagram ds={dsDiagram.current} showProjectId={bestPair.projectId}/>
+            )}
         </div>
     );
 };
