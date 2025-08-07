@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
 import ErrorLogCSV from './ErrorLogCSV';
+import BestPairGrid from './BestPairGrid';
 
 const CsvUploader = () => {
-    const [csvData, setCsvData] = useState([]);
-    const dsProjects = useRef({});
+
+    const dsProjects = {};
     const [bestPair, setBestPair] = useState({ empIdOne: null, empIdTwo: null, projectId: null, days: 0 });
     const [parseErrors, setParseErrors] = useState([]);
 
@@ -28,19 +29,20 @@ const CsvUploader = () => {
         }
 
         // Store in dsProjects
-        if (!dsProjects.current[projectId]) {
-            dsProjects.current[projectId] = {};
+        if (!dsProjects[projectId]) {
+            dsProjects[projectId] = {};
         }
 
-        if (!dsProjects.current[projectId][empId]) {
-            dsProjects.current[projectId][empId] = [];
+        if (!dsProjects[projectId][empId]) {
+            dsProjects[projectId][empId] = [];
         }
-        dsProjects.current[projectId][empId].push({
+
+        dsProjects[projectId][empId].push({
             dateFrom: dateFrom,
             dateTo: dateTo
         });
 
-        return [empIdRaw, projectIdRaw, dateFromRaw, dateToRaw];
+
     };
 
     const parseDateToTimestamp = (dateStr) => {
@@ -77,8 +79,8 @@ const CsvUploader = () => {
         let curBestPair = { empIdOne: null, empIdTwo: null, projectId: null, days: 0 };
 
 
-        for (const projectId in dsProjects.current) {
-            const employees = dsProjects.current[projectId];
+        for (const projectId in dsProjects) {
+            const employees = dsProjects[projectId];
             const empIds = Object.keys(employees);
             let curProjectOvelaps = [];
 
@@ -87,11 +89,11 @@ const CsvUploader = () => {
                     const empIdOne = empIds[i];
                     const empIdTwo = empIds[j];
 
-                    const TimesOneInd = Object.keys(employees[empIdOne]);
-                    const TimesTwoInd = Object.keys(employees[empIdTwo]);
+                    const timesOneInd = Object.keys(employees[empIdOne]);
+                    const timesTwoInd = Object.keys(employees[empIdTwo]);
 
-                    for (let t1 = 0; t1 < TimesOneInd.length; t1++) {
-                        for (let t2 = 0; t2 < TimesTwoInd.length; t2++) {
+                    for (let t1 = 0; t1 < timesOneInd.length; t1++) {
+                        for (let t2 = 0; t2 < timesTwoInd.length; t2++) {
 
                             const dateFromOne = employees[empIdOne][t1].dateFrom;
                             const dateToOne = employees[empIdOne][t1].dateTo;
@@ -124,6 +126,7 @@ const CsvUploader = () => {
 
         setBestPair(curBestPair);
     }
+
     const handleFileChange = (event) => {
         const file = event.target.files[0];
         if (!file) return;
@@ -134,12 +137,12 @@ const CsvUploader = () => {
             const text = e.target.result;
             const lines = text.trim().split('\n');
 
-            const rows = lines
+            lines
                 .map((row, index) => parseCsvRow(row, index))
                 .filter(row => row !== null);
 
             // setCsvData(rows); //debug raw file if need to
-            console.log("Parsed dsProjects:", dsProjects.current);
+            console.log("Parsed dsProjects:", dsProjects);
             calculateBestPair();
             console.log("Best Pair:", bestPair);
         };
@@ -152,26 +155,7 @@ const CsvUploader = () => {
             <h2>Upload CSV</h2>
             <input type="file" accept=".csv" onChange={handleFileChange} />
             {parseErrors.length > 0 && <ErrorLogCSV errors={parseErrors} />}
-            {bestPair.empIdOne && (
-                <table border="1" cellPadding="8" style={{ borderCollapse: 'collapse', marginTop: '1rem' }}>
-                    <thead>
-                        <tr>
-                            <th>Employee ID #1</th>
-                            <th>Employee ID #2</th>
-                            <th>Project ID</th>
-                            <th>Days Worked Together</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>{bestPair.empIdOne ?? 'N/A'}</td>
-                            <td>{bestPair.empIdTwo ?? 'N/A'}</td>
-                            <td>{bestPair.projectId ?? 'N/A'}</td>
-                            <td>{bestPair.days}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            )}
+            {bestPair.empIdOne && <BestPairGrid bestPair={bestPair} />}
         </div>
     );
 };
